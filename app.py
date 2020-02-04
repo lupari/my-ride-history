@@ -12,7 +12,6 @@ import conf
 from sync import sync
 import tiles
 
-
 app = Flask(__name__)
 app.config.from_mapping({'CACHE_TYPE': 'simple', 'CACHE_DEFAULT_TIMEOUT': 300})
 app.config.from_mapping({'BASIC_AUTH_USERNAME': conf.auth_username, 'BASIC_AUTH_PASSWORD': conf.auth_pwd})
@@ -67,8 +66,8 @@ def my_rides():
             del r['route']
 
     return render_template('app.html.j2', rides=json.dumps(rides),
-                           tiles=json.dumps(all_tiles),
-                           cluster=json.dumps(cluster),
+                           tiles=json.dumps([t.polygon() for t in all_tiles]),
+                           cluster=json.dumps([t.polygon() for t in cluster]),
                            maxblock=json.dumps({'sq': max_square, 'l': w}))
 
 

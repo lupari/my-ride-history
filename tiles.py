@@ -13,9 +13,6 @@ class Point:
     def __init__(self, x, y):
         self.x, self.y = x, y
 
-    def key(self):
-        return '%s-%s' % (self.x, self.y)
-
 
 class Coord(Point):
     def __init__(self, lat, lng):
@@ -41,13 +38,19 @@ class Tile(Point):
         bl = [self.tl.y, self.br.x]
         br = [self.br.y, self.br.x]
         tr = [self.br.y, self.tl.x]
-        return {'coordinates': [tl, bl, br, tr], 'label': self.key()}
+        return {'coordinates': [tl, bl, br, tr]}
 
     @staticmethod
     def x2lng(x): return x / N * 360.0 - 180.0
 
     @staticmethod
     def y2lat(y): return math.degrees(math.atan(math.sinh(math.pi * (1 - 2 * y / N))))
+
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+
+    def __hash__(self):
+        return hash((self.x, self.y))
 
 
 def window(it, size): yield from zip(
@@ -64,10 +67,10 @@ def intersects(p1, p2, p3, p4):
 
 def tiles(ride):
     coordinates = [Coord(lat, lng) for (lat, lng) in ride['route']]
-    t = {}
+    ts = set()
 
     def add_tile(point):
-        t[point.key()] = Tile(point.x, point.y)
+        ts.add(Tile(point.x, point.y))
 
     add_tile(coordinates[0])
     for a, b in window(coordinates, size=2):
@@ -84,35 +87,34 @@ def tiles(ride):
                 left = intersects(pa, pb, Point(tile.left, tile.top), Point(tile.left, tile.bottom))
                 if top + bottom + right + left == 2:  # take the tile if line a-b intersects it twice
                     add_tile(Point(tile.x, tile.y))
-    return t
+    return ts
 
 
 def flatten(xs): return [item for sublist in xs for item in sublist]
 
 
-def max_cluster(coordinates, start):
+def max_cluster(ts, start):
     def neighbors(t):
         return [Tile(t.x, t.y - 1), Tile(t.x + 1, t.y), Tile(t.x, t.y + 1), Tile(t.x - 1, t.y)]
 
     def valid(t):
-        return len([n for n in neighbors(t) if n.key() in [c['label'] for c in coordinates]]) == 4
+        return len([n for n in neighbors(t) if n in ts]) == 4
 
     def bfs():
-        seen = {start.key(): start}
+        seen = {start}
         q = [start]
         while q:
-            for n in [n for n in neighbors(q.pop(0)) if n.key() not in seen and valid(n)]:
+            for n in [n for n in neighbors(q.pop(0)) if n not in seen and valid(n)]:
                 q.append(n)
-                seen[n.key()] = n
-        return seen.values()
+                seen.add(n)
+        return seen
 
-    return [t.polygon() for t in bfs()]
+    return bfs()
 
 
-def max_block(coordinates, start, size=conf.max_square_bounds):
+def max_block(ts, start, size=conf.max_square_bounds):
     w = int(size / 2)
-    labels = [c['label'] for c in coordinates]
-    mat = [[1 if '%s-%s' % (x, y) in labels else 0 for x in range(start.x - w, start.x + w)]
+    mat = [[1 if Tile(x, y) in ts else 0 for x in range(start.x - w, start.x + w)]
            for y in range(start.y - w, start.y + w)]
 
     def search(label=1):
@@ -142,7 +144,6 @@ def max_block(coordinates, start, size=conf.max_square_bounds):
 
 
 def union(rides):
-    all_tiles = [t for t in flatten([r.values() for r in rides])]
-    (mv_x, mv_y), _ = Counter([(t.x, t.y) for t in all_tiles]).most_common(1)[0]
-    unique_tiles = {t.key(): t for t in all_tiles}
-    return Tile(mv_x, mv_y), [t.polygon() for t in unique_tiles.values()]
+    all_tiles = [t for t in flatten([r for r in rides])]
+    most_visited, _ = Counter(all_tiles).most_common(1)[0]
+    return most_visited, set(all_tiles)

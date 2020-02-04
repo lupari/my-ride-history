@@ -48,7 +48,7 @@ function renderApp(rides, tiles, maxblock, cluster) {
     fillColor: 'green',
     fillOpacity: 0.1,
     interactive: false,
-  })/* .bindPopup(`<strong>${c.label}</strong>`) */);
+  });
 
   const maxSquare = L.polygon(
       maxblock.sq, {
