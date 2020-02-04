@@ -22,14 +22,6 @@ class Coord(Point):
         super().__init__(Coord.lng2x(lng), Coord.lat2y(lat))
         self.lat, self.lng = lat, lng
 
-    def dist(self, c2):
-        lon1, lat1, lon2, lat2 = map(math.radians, [self.lng, self.lat, c2.lng, c2.lat])
-        d_lon = lon2 - lon1
-        d_lat = lat2 - lat1
-        a = math.sin(d_lat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(d_lon / 2) ** 2
-        c = 2 * math.asin(math.sqrt(a))
-        return 6371 * c
-
     @staticmethod
     def lng2x(lng): return int((lng + 180) / 360 * N)
 
