@@ -34,8 +34,7 @@ class Tile(Point):
         super().__init__(x, y)
         self.top, self.bottom = Tile.y2lat(y), Tile.y2lat(y + 1)
         self.left, self.right = Tile.x2lng(x), Tile.x2lng(x + 1)
-        self.tl, self.br = Point(self.left, self.top), Point(
-            self.right, self.bottom)
+        self.tl, self.br = Point(self.left, self.top), Point(self.right, self.bottom)
 
     def polygon(self):
         tl = [self.tl.y, self.tl.x]
@@ -48,8 +47,7 @@ class Tile(Point):
     def x2lng(x): return x / N * 360.0 - 180.0
 
     @staticmethod
-    def y2lat(y): return math.degrees(
-        math.atan(math.sinh(math.pi * (1 - 2 * y / N))))
+    def y2lat(y): return math.degrees(math.atan(math.sinh(math.pi * (1 - 2 * y / N))))
 
 
 def window(it, size): yield from zip(
@@ -133,14 +131,14 @@ def max_block(coordinates, start, size=conf.max_square_bounds):
                     loc = Point(start.x - w + j, start.y - w + i)
         return ms, loc
 
-    side_length, tl = search()
+    h, tl = search()
 
     return [
                [Tile.y2lat(tl.y), Tile.x2lng(tl.x)],
-               [Tile.y2lat(tl.y), Tile.x2lng(tl.x + side_length)],
-               [Tile.y2lat(tl.y + side_length), Tile.x2lng(tl.x + side_length)],
-               [Tile.y2lat(tl.y + side_length), Tile.x2lng(tl.x)],
-           ], side_length
+               [Tile.y2lat(tl.y), Tile.x2lng(tl.x + h)],
+               [Tile.y2lat(tl.y + h), Tile.x2lng(tl.x + h)],
+               [Tile.y2lat(tl.y + h), Tile.x2lng(tl.x)],
+           ], h
 
 
 def union(rides):
