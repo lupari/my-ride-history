@@ -39,8 +39,7 @@ class Tile(Point):
         self.tl, self.br = Point(left, top), Point(right, bottom)
         self.tr, self.bl = Point(right, top), Point(left, bottom)
 
-    def neighbors(self):
-        return [Tile(self.x + i, self.y + j) for i, j in [(-1, 0), (1, 0), (0, 1), (0, -1)]]
+    def neighbors(self): return [Tile(self.x + i, self.y + j) for i, j in [(-1, 0), (1, 0), (0, 1), (0, -1)]]
 
     def edges(self):
         return [Line(self.tl, self.tr), Line(self.bl, self.br), Line(self.tr, self.br), Line(self.tl, self.bl)]
@@ -56,14 +55,11 @@ class Tile(Point):
         return [[self.tl.y, self.tl.x],
                 [self.tl.y, x2lng(self.x + h)],
                 [y2lat(self.y + h), x2lng(self.x + h)],
-                [y2lat(self.y + h), self.tl.x]
-                ]
+                [y2lat(self.y + h), self.tl.x]]
 
-    def __eq__(self, other):
-        return self.x == other.x and self.y == other.y
+    def __eq__(self, other): return self.x == other.x and self.y == other.y
 
-    def __hash__(self):
-        return hash((self.x, self.y))
+    def __hash__(self): return hash((self.x, self.y))
 
 
 class Line:
@@ -78,28 +74,30 @@ class Line:
                ccw(self.p1, self.p2, line.p1) != ccw(self.p1, self.p2, line.p2)
 
 
-def window(it, size): yield from zip(
-    *[islice(it, s, None) for s, it in enumerate(tee(it, size))]
-)
+def parse(rides):
+    def window(it):
+        yield from zip(*[islice(it, s, None) for s, it in enumerate(tee(it))])
 
+    def skipped_tile(c, line):
+        for tile in Tile(c.x, c.y).neighbors():
+            if next((e for e in tile.edges() if line.intersects(e)), None) is not None:
+                yield tile
 
-def tiles(ride):
-    coordinates = [Coord(lat, lng) for (lat, lng) in ride['route']]
-    ts = {Tile(coordinates[0].x, coordinates[0].y)}
-    for a, b in window(coordinates, size=2):
-        ts.add(Tile(b.x, b.y))
-        # Check for extra visited tiles situated between coordinates that are from two diagonally placed tiles
-        # In case no coordinates for such tile were recorded during a short visit we might need to interpolate
-        if abs(a.x - b.x) == 1 and abs(a.y - b.y) == 1:
-            ab = Line(Point(a.lng, a.lat), Point(b.lng, b.lat))
-            for tile in Tile(a.x, a.y).neighbors():
-                if len([e for e in tile.edges() if ab.intersects(e)]) == 2:
-                    # take the tile if line a-b intersects it twice
-                    ts.add(tile)
-    return ts
-
-
-def flatten(xs): return [item for sublist in xs for item in sublist]
+    ts = []
+    for ride in rides:
+        coordinates = [Coord(lat, lng) for (lat, lng) in ride['route']]
+        ts.append(Tile(coordinates[0].x, coordinates[0].y))
+        for a, b in window(coordinates):
+            ts.append(Tile(b.x, b.y))
+            # Check for extra visited tiles situated between coordinates that are from two diagonally placed tiles
+            # In case no coordinates for such tile were recorded during a short visit we might need to interpolate
+            if abs(a.x - b.x) == 1 and abs(a.y - b.y) == 1:
+                ab = Line(Point(a.lng, a.lat), Point(b.lng, b.lat))
+                t = next(skipped_tile(a, ab))
+                if t is not None:
+                    ts.append(t)
+    most_visited, _ = Counter(ts).most_common(1)[0]
+    return most_visited, set(ts)
 
 
 def max_cluster(ts, start):
@@ -109,9 +107,9 @@ def max_cluster(ts, start):
     def bfs():
         seen, q = {start}, [start]
         while q:
-            for n in [n for n in q.pop(0).neighbors() if n not in seen and surrounded(n)]:
-                q.append(n)
-                seen.add(n)
+            for t in [n for n in q.pop(0).neighbors() if n not in seen and surrounded(n)]:
+                q.append(t)
+                seen.add(t)
         return seen
 
     return bfs()
@@ -140,9 +138,3 @@ def max_square(ts, start, size):
 
     h, tl = search()
     return Tile(tl.x, tl.y).square(h), h
-
-
-def union(rides):
-    all_tiles = [t for t in flatten([r for r in rides])]
-    most_visited, _ = Counter(all_tiles).most_common(1)[0]
-    return most_visited, set(all_tiles)

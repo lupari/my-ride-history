@@ -94,7 +94,7 @@ function renderApp(rides, tiles, square, cluster) {
   overlays[`Rides (${routing.length})`] = routeGroup;
   overlays[`Tiles (${tiling.length})`] = tileGroup;
   overlays[`Cluster (${clustering.length})`] = clusterGroup;
-  overlays[`Max Square ${square.l} km<sup>2</sup>`] = blockGroup;
+  overlays[`Max Square ${square.l*square.l} km<sup>2</sup>`] = blockGroup;
   overlays['All Tiles'] = allTilesGroup;
 
   const osmLayer = L.tileLayer(

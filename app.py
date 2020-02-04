@@ -58,7 +58,7 @@ def my_rides():
                 row['route'] = polyline.decode(row['polyline'])
                 rides.append(row)
     if len(rides) > 0:
-        most_visited, all_tiles = tiles.union([tiles.tiles(ride) for ride in rides])
+        most_visited, all_tiles = tiles.parse(rides)
         max_square, w = tiles.max_square(all_tiles, most_visited, conf.max_square_bounds)
         cluster = tiles.max_cluster(all_tiles, tiles.Tile(most_visited.x + int(w / 2), most_visited.y + int(w / 2)))
         for r in rides:
