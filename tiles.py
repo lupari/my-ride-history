@@ -70,13 +70,6 @@ def window(it, size): yield from zip(
 )
 
 
-def intersects(p1, p2, p3, p4):
-    def ccw(a, b, c):
-        return (c.y - a.y) * (b.x - a.x) > (b.y - a.y) * (c.x - a.x)
-
-    return ccw(p1, p3, p4) != ccw(p2, p3, p4) and ccw(p1, p2, p3) != ccw(p1, p2, p4)
-
-
 def tiles(ride):
     coordinates = [Coord(lat, lng) for (lat, lng) in ride['route']]
     ts = set()
