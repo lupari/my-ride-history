@@ -43,8 +43,7 @@ class Coord(Point):
     def lng2x(lng): return int((lng + 180) / 360 * N)
 
     @staticmethod
-    def lat2y(lat): return int(
-        (1.0 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2.0 * N)
+    def lat2y(lat): return int((1.0 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2.0 * N)
 
 
 class Tile(Point):
@@ -71,12 +70,14 @@ class Tile(Point):
 
 
 def window(it, size): yield from zip(
-    *[islice(it, s, None) for s, it in enumerate(tee(it, size))])
+    *[islice(it, s, None) for s, it in enumerate(tee(it, size))]
+)
 
 
 def intersects(p1, p2, p3, p4):
     def ccw(a, b, c):
         return (c.y - a.y) * (b.x - a.x) > (b.y - a.y) * (c.x - a.x)
+
     return ccw(p1, p3, p4) != ccw(p2, p3, p4) and ccw(p1, p2, p3) != ccw(p1, p2, p4)
 
 
@@ -90,13 +91,9 @@ def tiles(ride):
     add_tile(coordinates[0])
     for a, b in window(coordinates, size=2):
         add_tile(b)
-        if b.x == a.x and b.y == a.y:
-            continue
-        # Check for extra tiles situated in neighboring tiles between recorded coordinates
-        # that are diagonally tiled
-        # Might be that no coordinates for such tile were recorded during a short visit
-        # Do not consider coordinates more than 2 km apart
-        if abs(a.x - b.x) == 1 and abs(a.y - b.y) == 1 and a.dist(b) < 2:
+        # Check for extra visited tiles situated between coordinates that are from two diagonally placed tiles
+        # Might be that no coordinates for such tile were recorded during a short visit so we need to interpolate
+        if abs(a.x - b.x) == 1 and abs(a.y - b.y) == 1:
             neighbors = [Tile(a.x - 1, a.y), Tile(a.x + 1, a.y), Tile(a.x, a.y + 1), Tile(a.x, a.y - 1)]
             pa, pb = Point(a.lng, a.lat), Point(b.lng, b.lat)
             for tile in neighbors:
@@ -104,7 +101,7 @@ def tiles(ride):
                 bottom = intersects(pa, pb, Point(tile.left, tile.bottom), Point(tile.right, tile.bottom))
                 right = intersects(pa, pb, Point(tile.right, tile.top), Point(tile.right, tile.bottom))
                 left = intersects(pa, pb, Point(tile.left, tile.top), Point(tile.left, tile.bottom))
-                if top + bottom + right + left == 2:  # take the tile if line ab intersects it twice
+                if top + bottom + right + left == 2:  # take the tile if line a-b intersects it twice
                     add_tile(Point(tile.x, tile.y))
     return t
 
@@ -175,7 +172,7 @@ basic_auth = BasicAuth(app)
 
 CLIENT_ID = conf.client_id
 CLIENT_SECRET = conf.client_secret
-REDIRECT = conf.redirect
+REDIRECT = conf.hostname + '/sync2'
 EXT_API = 'https://www.strava.com'
 
 
@@ -228,4 +225,4 @@ def my_rides():
 
 
 if __name__ == "__main__":
-    app.run(port=5001, debug=True)
+    app.run(port=conf.port, debug=conf.debug)

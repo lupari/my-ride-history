@@ -38,7 +38,8 @@ function renderApp(rides, tiles, maxblock, cluster) {
           `, {closeOnClick: false},
   ));
 
-  // const points = rides.flatMap(r => r.route).map(c => new L.Marker([c.lat, c.lng]).bindPopup(`${c.lat} ${c.lng}`))
+  // const points = rides.flatMap(r => r.route)
+  //   .map(c => new L.Marker([c.lat, c.lng]).bindPopup(`${c.lat} ${c.lng}`))
 
   const tiling = tiles.map((t) => L.polygon(t.coordinates, {
     color: 'green',
@@ -102,12 +103,12 @@ function renderApp(rides, tiles, maxblock, cluster) {
         maxZoom: 18,
       },
   );
-  const map = L.map('map', {center: [64.8, 25.25],
-    layers: [osmLayer, routeGroup, tileGroup], zoom: 9});
+  const map = L.map('map', {layers: [osmLayer, routeGroup, tileGroup]});
   L.control.layers(null, overlays).addTo(map);
   L.control.scale({imperial: false}).addTo(map);
   L.control.locate({
     locateOptions: {maxZoom: 18, enableHighAccuracy: true},
   }).addTo(map);
+  map.locate({setView: true});
 }
 

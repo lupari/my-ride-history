@@ -1,6 +1,8 @@
 import os
-import requests
+
 import csv
+import requests
+
 import conf
 
 
