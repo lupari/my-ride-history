@@ -1,3 +1,4 @@
+from collections import Counter
 import csv
 from itertools import islice, tee
 import json
@@ -128,13 +129,14 @@ def max_cluster(coordinates, start):
     return [t.polygon() for t in bfs()]
 
 
-def max_block(coordinates, x_min=9300, y_min=4210, size=80):
+def max_block(coordinates, start, size=conf.max_square_bounds):
+    w = int(size / 2)
     labels = [c['label'] for c in coordinates]
-    mat = [[1 if '%s-%s' % (x, y) in labels else 0 for x in range(x_min, x_min + size)]
-           for y in range(y_min, y_min + size)]
+    mat = [[1 if '%s-%s' % (x, y) in labels else 0 for x in range(start.x - w, start.x + w)]
+           for y in range(start.y - w, start.y + w)]
 
     def search(label=1):
-        nr, nc = len(mat), (len(mat[0]) if mat else 0)
+        nr, nc = len(mat), len(mat[0])
         ms, loc = 0, Point(0, 0)
         counts = [[0] * nc for _ in range(nr)]
         for i, j in ((r, c) for r in reversed(range(nr)) for c in reversed(range(nc))):
@@ -146,7 +148,7 @@ def max_block(coordinates, x_min=9300, y_min=4210, size=80):
                 )) if i < (nr - 1) and j < (nc - 1) else 1  # edges
                 if counts[i][j] > ms:
                     ms = counts[i][j]
-                    loc = Point(x_min + j, y_min + i)
+                    loc = Point(start.x - w + j, start.y - w + i)
         return ms, loc
 
     side_length, tl = search()
@@ -156,12 +158,14 @@ def max_block(coordinates, x_min=9300, y_min=4210, size=80):
                [Tile.y2lat(tl.y), Tile.x2lng(tl.x + side_length)],
                [Tile.y2lat(tl.y + side_length), Tile.x2lng(tl.x + side_length)],
                [Tile.y2lat(tl.y + side_length), Tile.x2lng(tl.x)],
-           ], side_length, tl
+           ], side_length
 
 
 def union(rides):
-    unique_tiles = {t.key(): t for t in flatten([r.values() for r in rides])}
-    return [t.polygon() for t in unique_tiles.values()]
+    all_tiles = [t for t in flatten([r.values() for r in rides])]
+    (mv_x, mv_y), _ = Counter([(t.x, t.y) for t in all_tiles]).most_common(1)[0]
+    unique_tiles = {t.key(): t for t in all_tiles}
+    return Tile(mv_x, mv_y), [t.polygon() for t in unique_tiles.values()]
 
 
 app = Flask(__name__)
@@ -212,9 +216,9 @@ def my_rides():
                 row['route'] = polyline.decode(row['polyline'])
                 rides.append(row)
 
-    all_tiles = union([tiles(ride) for ride in rides])
-    max_square, w, loc = max_block(all_tiles)
-    cluster = max_cluster(all_tiles, Tile(loc.x, loc.y))
+    most_visited, all_tiles = union([tiles(ride) for ride in rides])
+    max_square, w = max_block(all_tiles, most_visited)
+    cluster = max_cluster(all_tiles, Tile(most_visited.x + int(w / 2), most_visited.y + int(w / 2)))
     for r in rides:
         del r['route']  # redo route point decoding on browser because amount of data is huge and takes time/bandwidth
 
