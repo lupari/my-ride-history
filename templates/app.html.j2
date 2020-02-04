@@ -1,0 +1,44 @@
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Mapping my rides</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.6.0/leaflet.js"></script>
+  <script type="text/javascript" src="https://rawgit.com/jieter/Leaflet.encoded/master/Polyline.encoded.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.70.0/src/L.Control.Locate.min.js"></script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.6.0/leaflet.css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.70.0/dist/L.Control.Locate.min.css" />
+  <link rel="shortcut icon" type="img/png" href="{{ url_for('static', filename='favicon.ico')}}" />
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+    }
+    html, body, #map {
+      height: 100%;
+      width: 100vw;
+    }
+    .fa {
+      transform: translateY(29%);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+</body>
+
+</html>
+
+{% block javascript %}
+<script>
+  const rides = {{ rides | safe }}
+  rides.forEach(r => r.route = L.Polyline.fromEncoded(r.polyline).getLatLngs());
+  const tiles = {{ tiles| safe }}
+  const mb = {{ maxblock| safe }}
+  const cluster = {{ cluster| safe }}
+  renderApp(rides, tiles, mb, cluster);
+</script>
+{% endblock %}
