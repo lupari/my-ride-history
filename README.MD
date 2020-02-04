@@ -23,7 +23,7 @@ Your hostname should be explicitly whitelisted in Strava API settings for redire
 ## Starting up
 Install required python packages. They are
 
-* flask, flask_basicauth, flask_caching
+* flask, Flask-BasicAuth, Flask-Caching
 * polyline
 * requests
 
