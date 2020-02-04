@@ -36,9 +36,9 @@
 <script>
   const rides = {{ rides | safe }}
   rides.forEach(r => r.route = L.Polyline.fromEncoded(r.polyline).getLatLngs());
-  const tiles = {{ tiles| safe }}
-  const mb = {{ maxblock| safe }}
-  const cluster = {{ cluster| safe }}
-  renderApp(rides, tiles, mb, cluster);
+  const tiles = {{ tiles | safe }}
+  const square = {{ max_square | safe }}
+  const cluster = {{ cluster | safe }}
+  renderApp(rides, tiles, square, cluster);
 </script>
 {% endblock %}

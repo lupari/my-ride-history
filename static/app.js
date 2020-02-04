@@ -1,10 +1,10 @@
 /**
  * @param {array} rides - rides
  * @param {array} tiles - 1*1 km tile coordinates
- * @param {object} maxblock - coordinates for max block
+ * @param {object} square - coordinates for max square
  * @param {array} cluster - cluster coordinates
  * **/
-function renderApp(rides, tiles, maxblock, cluster) {
+function renderApp(rides, tiles, square, cluster) {
   const toDuration = (s) => {
     const hours = Math.floor(s / 3600);
     const mods = s % 3600;
@@ -51,7 +51,7 @@ function renderApp(rides, tiles, maxblock, cluster) {
   }));
 
   const maxSquare = L.polygon(
-      maxblock.sq, {
+      square.shape, {
         color: 'blue',
         opacity: 0.5,
         weight: 0.5,
@@ -94,7 +94,7 @@ function renderApp(rides, tiles, maxblock, cluster) {
   overlays[`Rides (${routing.length})`] = routeGroup;
   overlays[`Tiles (${tiling.length})`] = tileGroup;
   overlays[`Cluster (${clustering.length})`] = clusterGroup;
-  overlays[`Max Square ${maxblock.l}*${maxblock.l} km`] = blockGroup;
+  overlays[`Max Square ${square.l} km<sup>2</sup>`] = blockGroup;
   overlays['All Tiles'] = allTilesGroup;
 
   const osmLayer = L.tileLayer(

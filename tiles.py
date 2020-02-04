@@ -5,8 +5,19 @@ import math
 import conf
 
 # tile calculus functions: https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
-Z = 14
-N = 2.0 ** Z
+N = 2.0 ** 14
+
+
+def lng2x(lng): return int((lng + 180) / 360 * N)
+
+
+def lat2y(lat): return int((1.0 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2.0 * N)
+
+
+def x2lng(x): return x / N * 360.0 - 180.0
+
+
+def y2lat(y): return math.degrees(math.atan(math.sinh(math.pi * (1 - 2 * y / N))))
 
 
 class Point:
@@ -16,22 +27,23 @@ class Point:
 
 class Coord(Point):
     def __init__(self, lat, lng):
-        super().__init__(Coord.lng2x(lng), Coord.lat2y(lat))
+        super().__init__(lng2x(lng), lat2y(lat))
         self.lat, self.lng = lat, lng
-
-    @staticmethod
-    def lng2x(lng): return int((lng + 180) / 360 * N)
-
-    @staticmethod
-    def lat2y(lat): return int((1.0 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2.0 * N)
 
 
 class Tile(Point):
     def __init__(self, x, y):
         super().__init__(x, y)
-        self.top, self.bottom = Tile.y2lat(y), Tile.y2lat(y + 1)
-        self.left, self.right = Tile.x2lng(x), Tile.x2lng(x + 1)
-        self.tl, self.br = Point(self.left, self.top), Point(self.right, self.bottom)
+        top, bottom = y2lat(y), y2lat(y + 1)
+        left, right = x2lng(x), x2lng(x + 1)
+        self.tl, self.br = Point(left, top), Point(right, bottom)
+        self.tr, self.bl = Point(right, top), Point(left, bottom)
+
+    def neighbors(self):
+        return [Tile(self.x + i, self.y + j) for i, j in [(-1, 0), (1, 0), (0, 1), (0, -1)]]
+
+    def edges(self):
+        return [Line(self.tl, self.tr), Line(self.bl, self.br), Line(self.tr, self.br), Line(self.tl, self.bl)]
 
     def polygon(self):
         tl = [self.tl.y, self.tl.x]
@@ -40,11 +52,12 @@ class Tile(Point):
         tr = [self.br.y, self.tl.x]
         return {'coordinates': [tl, bl, br, tr]}
 
-    @staticmethod
-    def x2lng(x): return x / N * 360.0 - 180.0
-
-    @staticmethod
-    def y2lat(y): return math.degrees(math.atan(math.sinh(math.pi * (1 - 2 * y / N))))
+    def square(self, h):
+        return [[self.tl.y, self.tl.x],
+                [self.tl.y, x2lng(self.x + h)],
+                [y2lat(self.y + h), x2lng(self.x + h)],
+                [y2lat(self.y + h), self.tl.x]
+                ]
 
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y
@@ -54,8 +67,8 @@ class Tile(Point):
 
 
 class Line:
-    def __init__(self, x1, y1, x2, y2):
-        self.p1, self.p2 = Point(x1, y1), Point(x2, y2)
+    def __init__(self, p1, p2):
+        self.p1, self.p2 = p1, p2
 
     def intersects(self, line):
         def ccw(a, b, c):
@@ -72,27 +85,17 @@ def window(it, size): yield from zip(
 
 def tiles(ride):
     coordinates = [Coord(lat, lng) for (lat, lng) in ride['route']]
-    ts = set()
-
-    def add_tile(point):
-        ts.add(Tile(point.x, point.y))
-
-    add_tile(coordinates[0])
+    ts = {Tile(coordinates[0].x, coordinates[0].y)}
     for a, b in window(coordinates, size=2):
-        add_tile(b)
+        ts.add(Tile(b.x, b.y))
         # Check for extra visited tiles situated between coordinates that are from two diagonally placed tiles
-        # Might be that no coordinates for such tile were recorded during a short visit so we need to interpolate
+        # In case no coordinates for such tile were recorded during a short visit we might need to interpolate
         if abs(a.x - b.x) == 1 and abs(a.y - b.y) == 1:
-            neighbors = [Tile(a.x - 1, a.y), Tile(a.x + 1, a.y), Tile(a.x, a.y + 1), Tile(a.x, a.y - 1)]
-            ab = Line(a.lng, a.lat, b.lng, b.lat)
-            for tile in neighbors:
-                top = Line(tile.left, tile.top, tile.right, tile.top)
-                bottom = Line(tile.left, tile.bottom, tile.right, tile.bottom)
-                right = Line(tile.right, tile.top, tile.right, tile.bottom)
-                left = Line(tile.left, tile.top, tile.left, tile.bottom)
-                if len([t for t in [top, bottom, right, left] if ab.intersects(t)]) == 2:
+            ab = Line(Point(a.lng, a.lat), Point(b.lng, b.lat))
+            for tile in Tile(a.x, a.y).neighbors():
+                if len([e for e in tile.edges() if ab.intersects(e)]) == 2:
                     # take the tile if line a-b intersects it twice
-                    add_tile(Point(tile.x, tile.y))
+                    ts.add(tile)
     return ts
 
 
@@ -100,17 +103,13 @@ def flatten(xs): return [item for sublist in xs for item in sublist]
 
 
 def max_cluster(ts, start):
-    def neighbors(t):
-        return [Tile(t.x, t.y - 1), Tile(t.x + 1, t.y), Tile(t.x, t.y + 1), Tile(t.x - 1, t.y)]
-
-    def valid(t):
-        return len([n for n in neighbors(t) if n in ts]) == 4
+    def surrounded(t):
+        return len([n for n in t.neighbors() if n in ts]) == 4
 
     def bfs():
-        seen = {start}
-        q = [start]
+        seen, q = {start}, [start]
         while q:
-            for n in [n for n in neighbors(q.pop(0)) if n not in seen and valid(n)]:
+            for n in [n for n in q.pop(0).neighbors() if n not in seen and surrounded(n)]:
                 q.append(n)
                 seen.add(n)
         return seen
@@ -118,17 +117,17 @@ def max_cluster(ts, start):
     return bfs()
 
 
-def max_block(ts, start, size=conf.max_square_bounds):
+def max_square(ts, start, size=conf.max_square_bounds):
     w = int(size / 2)
-    mat = [[1 if Tile(x, y) in ts else 0 for x in range(start.x - w, start.x + w)]
-           for y in range(start.y - w, start.y + w)]
+    m = [[1 if Tile(x, y) in ts else 0 for x in range(start.x - w, start.x + w)]
+         for y in range(start.y - w, start.y + w)]
 
     def search(label=1):
-        nr, nc = len(mat), len(mat[0])
+        nr, nc = len(m), len(m[0])
         ms, loc = 0, Point(0, 0)
         counts = [[0] * nc for _ in range(nr)]
         for i, j in ((r, c) for r in reversed(range(nr)) for c in reversed(range(nc))):
-            if mat[i][j] == label:
+            if m[i][j] == label:
                 counts[i][j] = (1 + min(
                     counts[i][j + 1],  # east
                     counts[i + 1][j],  # south
@@ -140,13 +139,7 @@ def max_block(ts, start, size=conf.max_square_bounds):
         return ms, loc
 
     h, tl = search()
-
-    return [
-               [Tile.y2lat(tl.y), Tile.x2lng(tl.x)],
-               [Tile.y2lat(tl.y), Tile.x2lng(tl.x + h)],
-               [Tile.y2lat(tl.y + h), Tile.x2lng(tl.x + h)],
-               [Tile.y2lat(tl.y + h), Tile.x2lng(tl.x)],
-           ], h
+    return Tile(tl.x, tl.y).square(h), h
 
 
 def union(rides):
