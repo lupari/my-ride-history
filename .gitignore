@@ -3,5 +3,4 @@ conf.py
 __pycache__
 .idea
 .vscode
-node_modules
 venv
