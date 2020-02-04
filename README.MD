@@ -15,10 +15,19 @@ client_id = 12345  # Your Strava API client ID
 client_secret = 'secret'  # Your Strava API client secret
 debug = False  # Run Flask in debug mode, affects hot deployment etc
 hostname = 'http://localhost:5001'  # Used by Strava so it can redirect back to your site after OAuth
-ride_file = 'rides.csv'  # Path to file where you want to locally store your ride data
+ride_file = 'rides.csv'  # Path to file where you want to locally store your ride data (in .csv format)
 port = 5001  #  Port assigned for this app
 ```
 Your hostname should be explicitly whitelisted in Strava API settings for redirection to work. Localhost is an exception to the rule, it is automatically whitelisted. Note that you should really use HTTPS with basic auth at least if the app is deployed outside localhost.
+
+## Starting up
+Install required python packages. They are
+
+* flask, flask_basicauth, flask_caching
+* polyline
+* requests
+
+Start the app with `python app.py` or through some other utility. See Flask documentation for more details.
 
 ## Syncing your local data with Strava
 Just navigate to `/sync` with your browser, enter your basic auth credentials (see above) and  you're forwarded to Strava OAuth screen. Allow access and soon you should be all set up. Note that depending on the amount of data you have the initial sync could take some time.

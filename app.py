@@ -1,12 +1,12 @@
+import csv
 from itertools import islice, tee
+import json
 import math
 import os
 
-import csv
 from flask import Flask, redirect, render_template, request
 from flask_basicauth import BasicAuth
 from flask_caching import Cache
-import json
 import polyline
 import requests
 
