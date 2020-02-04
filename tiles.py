@@ -53,6 +53,18 @@ class Tile(Point):
         return hash((self.x, self.y))
 
 
+class Line:
+    def __init__(self, x1, y1, x2, y2):
+        self.p1, self.p2 = Point(x1, y1), Point(x2, y2)
+
+    def intersects(self, line):
+        def ccw(a, b, c):
+            return (c.y - a.y) * (b.x - a.x) > (b.y - a.y) * (c.x - a.x)
+
+        return ccw(self.p1, line.p1, line.p2) != ccw(self.p2, line.p1, line.p2) and \
+               ccw(self.p1, self.p2, line.p1) != ccw(self.p1, self.p2, line.p2)
+
+
 def window(it, size): yield from zip(
     *[islice(it, s, None) for s, it in enumerate(tee(it, size))]
 )
@@ -79,13 +91,14 @@ def tiles(ride):
         # Might be that no coordinates for such tile were recorded during a short visit so we need to interpolate
         if abs(a.x - b.x) == 1 and abs(a.y - b.y) == 1:
             neighbors = [Tile(a.x - 1, a.y), Tile(a.x + 1, a.y), Tile(a.x, a.y + 1), Tile(a.x, a.y - 1)]
-            pa, pb = Point(a.lng, a.lat), Point(b.lng, b.lat)
+            ab = Line(a.lng, a.lat, b.lng, b.lat)
             for tile in neighbors:
-                top = intersects(pa, pb, Point(tile.left, tile.top), Point(tile.right, tile.top))
-                bottom = intersects(pa, pb, Point(tile.left, tile.bottom), Point(tile.right, tile.bottom))
-                right = intersects(pa, pb, Point(tile.right, tile.top), Point(tile.right, tile.bottom))
-                left = intersects(pa, pb, Point(tile.left, tile.top), Point(tile.left, tile.bottom))
-                if top + bottom + right + left == 2:  # take the tile if line a-b intersects it twice
+                top = Line(tile.left, tile.top, tile.right, tile.top)
+                bottom = Line(tile.left, tile.bottom, tile.right, tile.bottom)
+                right = Line(tile.right, tile.top, tile.right, tile.bottom)
+                left = Line(tile.left, tile.top, tile.left, tile.bottom)
+                if len([t for t in [top, bottom, right, left] if ab.intersects(t)]) == 2:
+                    # take the tile if line a-b intersects it twice
                     add_tile(Point(tile.x, tile.y))
     return ts
 
