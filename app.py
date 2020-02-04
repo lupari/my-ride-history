@@ -9,7 +9,7 @@ import polyline
 import requests
 
 import conf
-import dl
+from sync import sync
 import tiles
 
 
@@ -43,9 +43,7 @@ def authorized():
           % (EXT_API, CLIENT_ID, CLIENT_SECRET, auth_code)
     r = requests.post(url)
     response = r.json()
-    print(response['access_token'])
-    dl.sync(response['access_token'])
-    print("sync done")
+    sync(response['access_token'])
     cache.clear()
     return redirect('/')
 
