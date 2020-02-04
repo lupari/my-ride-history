@@ -107,8 +107,8 @@ function renderApp(rides, tiles, square, cluster) {
   L.control.layers(null, overlays).addTo(map);
   L.control.scale({imperial: false}).addTo(map);
   L.control.locate({
-    locateOptions: {maxZoom: 18, enableHighAccuracy: true},
+    locateOptions: {maxZoom: 14, enableHighAccuracy: true},
   }).addTo(map);
-  map.locate({setView: true});
+  map.locate({setView: true, maxZoom: 12});
 }
 

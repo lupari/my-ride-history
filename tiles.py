@@ -117,17 +117,17 @@ def max_cluster(ts, start):
     return bfs()
 
 
-def max_square(ts, start, size=conf.max_square_bounds):
+def max_square(ts, start, size):
     w = int(size / 2)
     m = [[1 if Tile(x, y) in ts else 0 for x in range(start.x - w, start.x + w)]
          for y in range(start.y - w, start.y + w)]
 
-    def search(label=1):
+    def search():
         nr, nc = len(m), len(m[0])
         ms, loc = 0, Point(0, 0)
         counts = [[0] * nc for _ in range(nr)]
         for i, j in ((r, c) for r in reversed(range(nr)) for c in reversed(range(nc))):
-            if m[i][j] == label:
+            if m[i][j] == 1:
                 counts[i][j] = (1 + min(
                     counts[i][j + 1],  # east
                     counts[i + 1][j],  # south
