@@ -51,19 +51,20 @@ def authorized():
 @app.route('/')
 @cache.cached(timeout=0)
 def my_rides():
-    rides = []
+    rides, all_tiles, cluster, max_square, w = [], [], [], [], 0
     if os.path.exists(conf.ride_file):
         with open(conf.ride_file, 'r') as rides_file:
             reader = csv.DictReader(rides_file)
             for row in reader:
                 row['route'] = polyline.decode(row['polyline'])
                 rides.append(row)
-
-    most_visited, all_tiles = tiles.union([tiles.tiles(ride) for ride in rides])
-    max_square, w = tiles.max_block(all_tiles, most_visited)
-    cluster = tiles.max_cluster(all_tiles, tiles.Tile(most_visited.x + int(w / 2), most_visited.y + int(w / 2)))
-    for r in rides:
-        del r['route']  # redo route point decoding on browser because amount of data is huge and takes time/bandwidth
+    if len(rides) > 0:
+        most_visited, all_tiles = tiles.union([tiles.tiles(ride) for ride in rides])
+        max_square, w = tiles.max_block(all_tiles, most_visited)
+        cluster = tiles.max_cluster(all_tiles, tiles.Tile(most_visited.x + int(w / 2), most_visited.y + int(w / 2)))
+        for r in rides:
+            # redo route point decoding on browser, amount of data is huge and takes time/bandwidth if transmitted
+            del r['route']
 
     return render_template('app.html.j2', rides=json.dumps(rides),
                            tiles=json.dumps(all_tiles),
