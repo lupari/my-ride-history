@@ -2,7 +2,6 @@ from collections import Counter
 from itertools import islice, tee
 import math
 
-import conf
 
 # tile calculus functions: https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
 N = 2.0 ** 14
@@ -25,7 +24,19 @@ class Point:
         self.x, self.y = x, y
 
 
-class Coord(Point):
+class Line:
+    def __init__(self, p1, p2):
+        self.p1, self.p2 = p1, p2
+
+    def intersects(self, other):
+        def ccw(a, b, c):
+            return (c.y - a.y) * (b.x - a.x) > (b.y - a.y) * (c.x - a.x)
+
+        return ccw(self.p1, other.p1, other.p2) != ccw(self.p2, other.p1, other.p2) and \
+               ccw(self.p1, self.p2, other.p1) != ccw(self.p1, self.p2, other.p2)
+
+
+class Coordinate(Point):
     def __init__(self, lat, lng):
         super().__init__(lng2x(lng), lat2y(lat))
         self.lat, self.lng = lat, lng
@@ -62,18 +73,6 @@ class Tile(Point):
     def __hash__(self): return hash((self.x, self.y))
 
 
-class Line:
-    def __init__(self, p1, p2):
-        self.p1, self.p2 = p1, p2
-
-    def intersects(self, line):
-        def ccw(a, b, c):
-            return (c.y - a.y) * (b.x - a.x) > (b.y - a.y) * (c.x - a.x)
-
-        return ccw(self.p1, line.p1, line.p2) != ccw(self.p2, line.p1, line.p2) and \
-               ccw(self.p1, self.p2, line.p1) != ccw(self.p1, self.p2, line.p2)
-
-
 def parse(rides):
     def window(it):
         yield from zip(*[islice(it, s, None) for s, it in enumerate(tee(it))])
@@ -85,7 +84,7 @@ def parse(rides):
 
     ts = []
     for ride in rides:
-        coordinates = [Coord(lat, lng) for (lat, lng) in ride['route']]
+        coordinates = [Coordinate(lat, lng) for (lat, lng) in ride['route']]
         ts.append(Tile(coordinates[0].x, coordinates[0].y))
         for a, b in window(coordinates):
             ts.append(Tile(b.x, b.y))
