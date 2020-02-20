@@ -58,8 +58,9 @@ def my_rides():
                 rides.append(row)
     if len(rides) > 0:
         most_visited, visited_tiles = tiles.parse(rides)
-        max_square, w = tiles.max_square(visited_tiles, most_visited, conf.max_square_bounds)
-        square_center = tiles.Tile(most_visited.x + int(w / 2), most_visited.y + int(w / 2))
+        max_square_tl, w = tiles.max_square(visited_tiles, most_visited, conf.max_square_bounds)
+        max_square = max_square_tl.square(w)
+        square_center = tiles.Tile(max_square_tl.x + int(w / 2), max_square_tl.y + int(w / 2))
         cluster = tiles.max_cluster(visited_tiles, square_center)
         for r in rides:
             # redo route point decoding on browser, amount of data is huge and takes time/bandwidth if transmitted

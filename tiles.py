@@ -100,11 +100,10 @@ def parse(rides):
 
 
 def max_cluster(ts, start):
-    def surrounded(t):
-        return len([n for n in t.neighbors() if n in ts]) == 4
+    def surrounded(t): return len([n for n in t.neighbors() if n in ts]) == 4
 
     def bfs():
-        seen, q = {start}, [start]
+        seen, q = set(), [start]
         while q:
             for t in [n for n in q.pop(0).neighbors() if n not in seen and surrounded(n)]:
                 q.append(t)
@@ -136,4 +135,4 @@ def max_square(ts, start, size):
         return ms, loc
 
     h, tl = search()
-    return Tile(tl.x, tl.y).square(h), h
+    return Tile(tl.x, tl.y), h
