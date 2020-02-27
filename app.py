@@ -27,7 +27,7 @@ EXT_API = 'https://www.strava.com'
 @app.route('/sync')
 @basic_auth.required
 def sync_rides():
-    url = '%s/oauth/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=activity:read' \
+    url = '%s/oauth/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=activity:read_all' \
           % (EXT_API, CLIENT_ID, REDIRECT)
     return redirect(url)
 
