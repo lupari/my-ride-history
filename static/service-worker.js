@@ -3,7 +3,7 @@ const RUNTIME = 'runtime';
 
 // A list of local resources we always want to be cached.
 const PRECACHE_URLS = [
-   '/static/'
+
 ];
 
 // The install handler takes care of precaching the resources we always need.
@@ -31,12 +31,12 @@ self.addEventListener('activate', event => {
   );
 });
 
+// WTF should read on this. OAuth fails if enabled
 // The fetch handler serves responses for same-origin resources from a cache.
 // If no response is found, it populates the runtime cache with the response
 // from the network before returning it to the page.
-self.addEventListener('fetch', event => {
+/*self.addEventListener('fetch', event => {
   // Skip cross-origin requests, like those for Google Analytics.
-  if (event.request.url.startsWith(self.location.origin)) {
     event.respondWith(
       caches.match(event.request).then(cachedResponse => {
         if (cachedResponse) {
@@ -53,5 +53,6 @@ self.addEventListener('fetch', event => {
         });
       })
     );
-  }
+
 });
+*/
