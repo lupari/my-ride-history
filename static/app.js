@@ -109,6 +109,9 @@ function renderApp(rides, tiles, square, cluster) {
   L.control.locate({
     locateOptions: {maxZoom: 14, enableHighAccuracy: true},
   }).addTo(map);
+
+  L.easyButton('fa-refresh', () => window.location.href='/sync').addTo(map);
+
   map.locate({setView: true, maxZoom: 12});
 }
 

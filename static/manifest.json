@@ -1,0 +1,31 @@
+{
+  "name": "Mah rides",
+  "short_name": "Mah rides",
+  "theme_color": "#CBD394",
+  "background_color": "#F1F7C6",
+  "icons": [
+    {
+        "src": "/static/images/cog64x64.png",
+        "type": "image/png",
+        "sizes": "64x64"
+      },
+      {
+        "src": "/static/images/cog96x96.png",
+        "type": "image/png",
+        "sizes": "96x96"
+      },
+      {
+        "src": "/static/images/cog192x192.png",
+        "type": "image/png",
+        "sizes": "192x192"
+      },
+      {
+        "src": "/static/images/cog.png",
+        "type": "image/png",
+        "sizes": "512x512"
+      }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait"
+}

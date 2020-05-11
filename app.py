@@ -24,6 +24,11 @@ REDIRECT = conf.hostname + '/sync2'
 EXT_API = 'https://www.strava.com'
 
 
+@app.route('/service-worker.js')
+def sw():
+    return app.send_static_file('service-worker.js')
+
+
 @app.route('/sync')
 @basic_auth.required
 def sync_rides():
