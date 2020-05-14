@@ -30,6 +30,9 @@ EXT_API = 'https://www.strava.com'
 def sw():
     return app.send_static_file('service-worker.js')
 
+@app.route('/')
+def home():
+    return render_template('home.html.j2')
 
 @app.route('/sync')
 @basic_auth.required
@@ -43,17 +46,17 @@ def sync_rides():
 @basic_auth.required
 def authorized():
     if 'error' in request.args:
-        return redirect('/')
+        return redirect('/app')
     auth_code = request.args['code']
     url = '%s/oauth/token?client_id=%s&client_secret=%s&code=%s&grant_type=authorization_code' \
           % (EXT_API, CLIENT_ID, CLIENT_SECRET, auth_code)
     response = requests.post(url).json()
     sync(response['access_token'])
     cache.clear()
-    return redirect('/')
+    return redirect('/app')
 
 
-@app.route('/')
+@app.route('/app')
 @cache.cached(timeout=0)
 def my_rides():
     rides, visited_tiles, cluster, max_square, w = [], [], [], [], 0

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+  <meta name="description" content="App for keeping track of my rides" />
+  <meta name="theme-color" content="#CBD394" />
+  <title>Mapping my rides</title>
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <link rel="shortcut icon" type="img/png" href="{{ url_for('static', filename='favicon.ico')}}" />
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/cog.png')}}">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" />
+  <script type="text/javascript">
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker
+            .register('./service-worker.js')
+            .then(function(registration) {
+                console.log('Service Worker Registered!');
+                return registration;
+             })
+             .catch(function(err) {
+                console.error('Unable to register service worker.', err);
+        });
+    }
+  </script>
+  <style type="text/css">
+    html, body {
+        height: 100%;
+        margin: 0;
+    }
+    #wrapper {
+        min-height: 100%;
+    }
+    .center {
+      margin: 0;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      -ms-transform: translate(-50%, -50%);
+      transform: translate(-50%, -50%);
+    }
+    .loader {
+       display: none;
+    }
+  </style>
+  <script type="text/javascript">
+    function spinner() {
+        document.getElementsByClassName("loader")[0].style.display = "block";
+        document.getElementsByClassName("draw")[0].style.display = "none";
+    }
+  </script>
+
+</head>
+
+<body>
+  <h1 style="display: none">Mah rides</h1>
+  <div id="wrapper">
+      <a href="/app" onclick="spinner()" class="draw btn btn-dark center">Draw map</a>
+      <div class="loader center">
+        <div class="d-flex justify-content-center">
+          <div class="spinner-border text-dark" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </div>
+      </div>
+  </div>
+</body>
+
+</html>
