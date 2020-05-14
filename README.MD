@@ -40,7 +40,7 @@ Install required python packages. They are
 Start the app with `python app.py` or through some other utility. See Flask documentation for more details.
 
 ## Syncing your local data with Strava
-Just navigate to `/sync` with your browser, enter your basic auth credentials (see above) and  you're forwarded to Strava OAuth screen. Allow access and soon you should be all set up. Note that depending on the amount of data you have the initial sync could take some time.
+Just click the refresh icon on the map or navigate to `/sync` with your browser, enter your basic auth credentials (see above) and you're forwarded to Strava OAuth screen. Allow access and soon you should be all set up. Note that depending on the amount of data you have the initial sync could take some time.
 
 ## Notes
 Max square calculation follows a heuristic that search starts from the most visited tile using predefined customizable 
