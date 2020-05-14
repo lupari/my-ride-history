@@ -5,6 +5,7 @@ import os
 from flask import Flask, redirect, render_template, request
 from flask_basicauth import BasicAuth
 from flask_caching import Cache
+from flask_compress import Compress
 import polyline
 import requests
 
@@ -17,6 +18,7 @@ app.config.from_mapping({'CACHE_TYPE': 'simple', 'CACHE_DEFAULT_TIMEOUT': 300})
 app.config.from_mapping({'BASIC_AUTH_USERNAME': conf.auth_username, 'BASIC_AUTH_PASSWORD': conf.auth_pwd})
 cache = Cache(app)
 basic_auth = BasicAuth(app)
+Compress(app)
 
 CLIENT_ID = conf.client_id
 CLIENT_SECRET = conf.client_secret

@@ -1,19 +1,24 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+  <meta name="description" content="App for keeping track of my rides" />
+  <meta name="theme-color" content="#CBD394" />
   <title>Mapping my rides</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.6.0/leaflet.js"></script>
-  <script type="text/javascript" src="https://rawgit.com/jieter/Leaflet.encoded/master/Polyline.encoded.js"></script>
+  <script src="https://rawgit.com/jieter/Leaflet.encoded/master/Polyline.encoded.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.70.0/src/L.Control.Locate.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.js"></script>
   <script src="{{ url_for('static', filename='app.js') }}"></script>
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.6.0/leaflet.css" />
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="preload" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" /></noscript>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.70.0/dist/L.Control.Locate.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.css">
   <link rel="shortcut icon" type="img/png" href="{{ url_for('static', filename='favicon.ico')}}" />
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/cog.png')}}">
   <style>
     body {
       padding: 0;
@@ -22,6 +27,14 @@
     html, body, #map {
       height: 100%;
       width: 100vw;
+    }
+    .fa {
+      display: inline-block;
+      font: normal normal normal 14px/1 FontAwesome;
+      font-size: inherit;
+      text-rendering: auto;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale
     }
     .fa-map-marker {
       transform: translateY(29%);
@@ -46,6 +59,7 @@
 </head>
 
 <body>
+  <h1 style="display: none">Mah rides</h1>
   <div id="map"></div>
 </body>
 

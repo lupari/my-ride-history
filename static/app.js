@@ -110,8 +110,9 @@ function renderApp(rides, tiles, square, cluster) {
     locateOptions: {maxZoom: 14, enableHighAccuracy: true},
   }).addTo(map);
 
-  L.easyButton('fa-refresh', () => window.location.href='/sync').addTo(map);
-
+  const syncCtrl = L.easyButton('fa-refresh', () => window.location.href='/sync');
+  syncCtrl.button.setAttribute('aria-label', 'sync');
+  syncCtrl.addTo(map);
   map.locate({setView: true, maxZoom: 12});
 }
 
