@@ -43,6 +43,7 @@ self.addEventListener('fetch', event => {
     // DevTools opening will trigger these o-i-c requests, which this SW can't handle.
     // There's probaly more going on here, but I'd rather just ignore this problem. :)
     if (event.request.cache === 'only-if-cached' && event.request.mode !== 'same-origin') return;
+    if (event.request.url.match('^.*\/sync.*$')) return;
     // Skip cross-origin requests, like those for Google Analytics.
     event.respondWith(
       caches.match(event.request).then(cachedResponse => {
@@ -51,8 +52,8 @@ self.addEventListener('fetch', event => {
         }
 
         return caches.open(RUNTIME).then(cache => {
-          const options = event.request.url.match( '^.*\/sync.*$') ? { credentials: 'include' } : {};
-          return fetch(event.request, options).then(response => {
+          // const options = event.request.url.match( '^.*\/sync.*$') ? { credentials: 'include' } : {};
+          return fetch(event.request).then(response => {
             // Put a copy of the response in the runtime cache.
             return cache.put(event.request, response.clone()).then(() => {
               return response;
