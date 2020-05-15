@@ -41,9 +41,15 @@ self.addEventListener('activate', (evt) => {
 // from the network before returning it to the page.
 self.addEventListener('fetch', event => {
     // DevTools opening will trigger these o-i-c requests, which this SW can't handle.
-    // There's probaly more going on here, but I'd rather just ignore this problem. :)
+    // There's probably more going on here, but I'd rather just ignore this problem. :)
     if (event.request.cache === 'only-if-cached' && event.request.mode !== 'same-origin') return;
-    if (event.request.url.match('^.*\/sync.*$')) return;
+    // If we are to sync stuff with Strava we are going to have updated map content -> remove map data response from cache
+    // Don't know service worker enough to come up with a better solution
+    // Also don't cache sync requests, it's of no use
+    if (event.request.url.match('^.*\/sync.*$')) {
+        caches.open(RUNTIME).then(cache => cache.delete('/app'))
+        return;
+    }
     // Skip cross-origin requests, like those for Google Analytics.
     event.respondWith(
       caches.match(event.request).then(cachedResponse => {
