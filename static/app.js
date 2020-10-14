@@ -70,15 +70,127 @@ function renderApp(rides, tiles, square, cluster) {
     interactive: false,
   }));
 
-  L.GridLayer.GridDebug = L.GridLayer.extend({
-    createTile: (coords) => {
-      const tile = L.DomUtil.create('div', 'leaflet-tile');
-      tile.style.outline = '1px solid grey';
-      tile.style.fontWeight = 'bold';
-      tile.style.fontSize = '14pt';
-      tile.innerHTML = `&nbsp;${coords.x}/${coords.y}`;
-      return tile;
-    },
+  lon2tile = (lon,zoom) => Math.floor((lon+180)/360*Math.pow(2,zoom));
+  lat2tile = (lat,zoom) => Math.floor((1-Math.log(Math.tan(lat*Math.PI/180) + 1/Math.cos(lat*Math.PI/180))/Math.PI)/2 *Math.pow(2,zoom));
+  tile2long = (x,z) => x/Math.pow(2,z)*360-180;
+  tile2lat = (y,z) => {
+      var n=Math.PI-2*Math.PI*y/Math.pow(2,z);
+      return 180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n)));
+  }
+
+  L.GridLayer.GridDebug = L.GridLayer.extend({  // TODO: make recursive or something
+    createTile: function (coords) {
+        const sz = this.getTileSize();
+        const tile = L.DomUtil.create('canvas', 'leaflet-tile');
+        var ctx = tile.getContext('2d');
+        tile.width = sz.x;
+        tile.height = sz.y;
+        if (coords.z === 13) { // split in four
+            ctx.rect(0, 0, sz.x/2, sz.y/2);
+            ctx.rect(0, sz.y/2, sz.x/2, sz.y/2);
+            ctx.rect(sz.x/2, 0, sz.x/2, sz.y/2);
+            ctx.rect(sz.x/2, sz.y/2, sz.x/2, sz.y/2);
+            ctx.stroke();
+        } else if (coords.z === 14) { // nothing to do
+            ctx.rect(0, 0, sz.x, sz.y);
+            ctx.stroke();
+        } else if (coords.z === 15) { // merge four into one
+            const lon = tile2long(coords.x, coords.z);
+            const lat = tile2lat(coords.y, coords.z);
+            const z14x = lon2tile(lon, 14);
+            const z14y = lat2tile(lat, 14);
+            ctx.beginPath();
+            if (z14x*2 === coords.x && z14y*2 === coords.y) {
+                ctx.moveTo(0, 0);
+                ctx.lineTo(0, sz.x);
+                ctx.moveTo(0, 0);
+                ctx.lineTo(sz.y, 0);
+            } else if (z14x*2 + 1 === coords.x  && z14y*2 === coords.y) {
+                ctx.moveTo(0, 0);
+                ctx.lineTo(sz.x, 0);
+                ctx.moveTo(sz.x, 0);
+                ctx.lineTo(sz.x, sz.y);
+            } else if (z14x*2 === coords.x && z14y*2 + 1 === coords.y) {
+                ctx.moveTo(0, 0);
+                ctx.lineTo(0, sz.y);
+                ctx.moveTo(0, sz.y);
+                ctx.lineTo(sz.x, sz.y);
+            } else {
+                ctx.moveTo(sz.x, 0);
+                ctx.lineTo(sz.x, sz.y);
+                ctx.moveTo(0, sz.y);
+                ctx.lineTo(sz.x, sz.y);
+            }
+            ctx.stroke();
+        } else if (coords.z === 16) { // merge eight into one
+            const lon = tile2long(coords.x, coords.z);
+            const lat = tile2lat(coords.y, coords.z);
+            const z14x = lon2tile(lon, 14);
+            const z14y = lat2tile(lat, 14);
+            if (z14y*4 === coords.y) { // top row
+                if (z14x*4 === coords.x) {// top left
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(0, sz.x);
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(sz.y, 0);
+                    ctx.stroke();
+                }
+                if (z14x*4+3 === coords.x) {// top right
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(sz.x, 0);
+                    ctx.moveTo(sz.x, 0);
+                    ctx.lineTo(sz.x, sz.y);
+                    ctx.stroke();
+                }
+                else {
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(sz.x, 0);
+                    ctx.stroke();
+                }
+            }
+            if (z14y*4+3 === coords.y) { // bottom row
+                if (z14x*4 === coords.x) { // bottom left
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(0, sz.y);
+                    ctx.moveTo(0, sz.y);
+                    ctx.lineTo(sz.x, sz.y);
+                    ctx.stroke();
+                }
+                if (z14x*4+3 === coords.x) {// bottom right
+                    ctx.beginPath();
+                    ctx.moveTo(0, sz.x);
+                    ctx.lineTo(sz.x, sz.y);
+                    ctx.moveTo(sz.y, 0);
+                    ctx.lineTo(sz.x, sz.y);
+                    ctx.stroke();
+                }
+                else {
+                    ctx.beginPath();
+                    ctx.moveTo(0, sz.y);
+                    ctx.lineTo(sz.x, sz.y);
+                    ctx.stroke();
+                }
+            }
+            if (z14x*4 === coords.x) { // left
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(0, sz.y);
+                ctx.stroke();
+            }
+            if (z14x*4+3 === coords.x) { // right
+                ctx.beginPath();
+                ctx.moveTo(sz.x, 0);
+                ctx.lineTo(sz.x, sz.y);
+                ctx.stroke();
+            }
+        }
+        // return the tile so it can be rendered on screen
+        return tile;
+      },
   });
   L.gridLayer.gridDebug = (opts) => new L.GridLayer.GridDebug(opts);
 
@@ -87,14 +199,14 @@ function renderApp(rides, tiles, square, cluster) {
   const blockGroup = L.layerGroup([maxSquare]);
   const clusterGroup = L.layerGroup(clustering);
   const allTilesGroup = L.layerGroup([L.gridLayer.gridDebug({
-    minZoom: 13, maxZoom: 14,
+    minZoom: 13, maxZoom: 16
   })]);
 
   const overlays = {};
   overlays[`Rides (${routing.length})`] = routeGroup;
   overlays[`Tiles (${tiling.length})`] = tileGroup;
   overlays[`Cluster (${clustering.length})`] = clusterGroup;
-  overlays[`Max Square (${square.l*square.l} km<sup>2</sup>)`] = blockGroup;
+  overlays[`Max Square (${square.l}*${square.l}`] = blockGroup;
   overlays['All Tiles'] = allTilesGroup;
 
   const osmLayer = L.tileLayer(
