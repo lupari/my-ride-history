@@ -42,10 +42,9 @@ function renderApp(rides, tiles, square, cluster) {
   //   .map(c => new L.Marker([c.lat, c.lng]).bindPopup(`${c.lat} ${c.lng}`))
 
   const tiling = tiles.map((t) => L.polygon(t.coordinates, {
-    color: 'green',
+    color: '#006400',
     opacity: 0.5,
     weight: 0.5,
-    fillColor: 'green',
     fillOpacity: 0.1,
     interactive: false,
   }));
@@ -55,7 +54,6 @@ function renderApp(rides, tiles, square, cluster) {
         color: 'blue',
         opacity: 0.5,
         weight: 0.5,
-        fillColor: 'blue',
         fillOpacity: 0.1,
         interactive: false,
       },
@@ -65,7 +63,6 @@ function renderApp(rides, tiles, square, cluster) {
     color: 'red',
     opacity: 0.5,
     weight: 0.5,
-    fillColor: 'red',
     fillOpacity: 0.1,
     interactive: false,
   }));
@@ -78,120 +75,107 @@ function renderApp(rides, tiles, square, cluster) {
       return 180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n)));
   }
 
-  L.GridLayer.GridDebug = L.GridLayer.extend({  // TODO: make recursive or something
-    createTile: function (coords) {
-        const sz = this.getTileSize();
-        const tile = L.DomUtil.create('canvas', 'leaflet-tile');
-        var ctx = tile.getContext('2d');
-        tile.width = sz.x;
-        tile.height = sz.y;
-        if (coords.z === 13) { // split in four
-            ctx.rect(0, 0, sz.x/2, sz.y/2);
-            ctx.rect(0, sz.y/2, sz.x/2, sz.y/2);
-            ctx.rect(sz.x/2, 0, sz.x/2, sz.y/2);
-            ctx.rect(sz.x/2, sz.y/2, sz.x/2, sz.y/2);
-            ctx.stroke();
-        } else if (coords.z === 14) { // nothing to do
-            ctx.rect(0, 0, sz.x, sz.y);
-            ctx.stroke();
-        } else if (coords.z === 15) { // merge four into one
-            const lon = tile2long(coords.x, coords.z);
-            const lat = tile2lat(coords.y, coords.z);
-            const z14x = lon2tile(lon, 14);
-            const z14y = lat2tile(lat, 14);
-            ctx.beginPath();
-            if (z14x*2 === coords.x && z14y*2 === coords.y) {
-                ctx.moveTo(0, 0);
-                ctx.lineTo(0, sz.x);
-                ctx.moveTo(0, 0);
-                ctx.lineTo(sz.y, 0);
-            } else if (z14x*2 + 1 === coords.x  && z14y*2 === coords.y) {
-                ctx.moveTo(0, 0);
-                ctx.lineTo(sz.x, 0);
-                ctx.moveTo(sz.x, 0);
-                ctx.lineTo(sz.x, sz.y);
-            } else if (z14x*2 === coords.x && z14y*2 + 1 === coords.y) {
-                ctx.moveTo(0, 0);
-                ctx.lineTo(0, sz.y);
-                ctx.moveTo(0, sz.y);
-                ctx.lineTo(sz.x, sz.y);
-            } else {
-                ctx.moveTo(sz.x, 0);
-                ctx.lineTo(sz.x, sz.y);
-                ctx.moveTo(0, sz.y);
-                ctx.lineTo(sz.x, sz.y);
-            }
-            ctx.stroke();
-        } else if (coords.z === 16) { // merge eight into one
-            const lon = tile2long(coords.x, coords.z);
-            const lat = tile2lat(coords.y, coords.z);
-            const z14x = lon2tile(lon, 14);
-            const z14y = lat2tile(lat, 14);
-            if (z14y*4 === coords.y) { // top row
-                if (z14x*4 === coords.x) {// top left
-                    ctx.beginPath();
-                    ctx.moveTo(0, 0);
-                    ctx.lineTo(0, sz.x);
-                    ctx.moveTo(0, 0);
-                    ctx.lineTo(sz.y, 0);
-                    ctx.stroke();
-                }
-                if (z14x*4+3 === coords.x) {// top right
-                    ctx.beginPath();
-                    ctx.moveTo(0, 0);
-                    ctx.lineTo(sz.x, 0);
-                    ctx.moveTo(sz.x, 0);
-                    ctx.lineTo(sz.x, sz.y);
-                    ctx.stroke();
-                }
-                else {
-                    ctx.beginPath();
-                    ctx.moveTo(0, 0);
-                    ctx.lineTo(sz.x, 0);
-                    ctx.stroke();
-                }
-            }
-            if (z14y*4+3 === coords.y) { // bottom row
-                if (z14x*4 === coords.x) { // bottom left
-                    ctx.beginPath();
-                    ctx.moveTo(0, 0);
-                    ctx.lineTo(0, sz.y);
-                    ctx.moveTo(0, sz.y);
-                    ctx.lineTo(sz.x, sz.y);
-                    ctx.stroke();
-                }
-                if (z14x*4+3 === coords.x) {// bottom right
-                    ctx.beginPath();
-                    ctx.moveTo(0, sz.x);
-                    ctx.lineTo(sz.x, sz.y);
-                    ctx.moveTo(sz.y, 0);
-                    ctx.lineTo(sz.x, sz.y);
-                    ctx.stroke();
-                }
-                else {
-                    ctx.beginPath();
-                    ctx.moveTo(0, sz.y);
-                    ctx.lineTo(sz.x, sz.y);
-                    ctx.stroke();
-                }
-            }
-            if (z14x*4 === coords.x) { // left
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(0, sz.y);
-                ctx.stroke();
-            }
-            if (z14x*4+3 === coords.x) { // right
-                ctx.beginPath();
-                ctx.moveTo(sz.x, 0);
-                ctx.lineTo(sz.x, sz.y);
-                ctx.stroke();
-            }
+  drawTop = (c, ctx) => {
+    ctx.moveTo(0, 0);
+    ctx.lineTo(c.x, 0);
+    ctx.stroke();
+  }
+
+  drawBottom = (c, ctx) => {
+    ctx.moveTo(0, c.y);
+    ctx.lineTo(c.x, c.y);
+    ctx.stroke();
+  }
+
+  drawLeft = (c, ctx) => {
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, c.y);
+    ctx.stroke();
+  }
+
+  drawRight = (c, ctx) => {
+    ctx.moveTo(c.x, 0);
+    ctx.lineTo(c.x, c.y);
+    ctx.stroke();
+  }
+
+  drawTopLeft = (c, ctx) => {
+    drawTop(c, ctx);
+    drawLeft(c, ctx);
+  }
+
+  drawTopRight = (c, ctx) => {
+    drawTop(c, ctx);
+    drawRight(c, ctx);
+  }
+
+  drawBottomLeft = (c, ctx) => {
+    drawBottom(c, ctx);
+    drawLeft(c, ctx);
+  }
+
+  drawBottomRight = (c, ctx) => {
+    drawBottom(c, ctx);
+    drawRight(c, ctx);
+  }
+
+  merge = (c, bounds, ctx, w) => {
+    const lon = tile2long(c.x, c.z);
+    const lat = tile2lat(c.y, c.z);
+    const z14x = lon2tile(lon, 14);
+    const z14y = lat2tile(lat, 14);
+
+    ctx.beginPath();
+    if (z14y*w === c.y) { // top row
+        if (z14x*w === c.x) {
+           drawTopLeft(bounds, ctx);
         }
-        // return the tile so it can be rendered on screen
+        if (z14x*w+w-1 === c.x) {
+            drawTopRight(bounds, ctx);
+        }
+        else {
+            drawTop(bounds, ctx);
+        }
+    }
+    if (z14y*w+w-1 === c.y) { // bottom row
+        if (z14x*w === c.x) { // bottom left
+            drawBottomLeft(bounds, ctx);
+        }
+        if (z14x*w+w-1 === c.x) {// bottom right
+            drawBottomRight(bounds, ctx);
+        }
+        else {
+            drawBottom(bounds, ctx);
+        }
+    }
+    if (z14x*w === c.x) { // left
+        drawLeft(bounds, ctx);
+    }
+    if (z14x*w+w-1 === c.x) { // right
+        drawRight(bounds, ctx);
+    }
+  }
+
+  L.GridLayer.GridDebug = L.GridLayer.extend({
+    createTile: function (coords) {
+        const bounds = this.getTileSize();
+        const tile = L.DomUtil.create('canvas', 'leaflet-tile');
+        tile.width = bounds.x;
+        tile.height = bounds.y;
+        var ctx = tile.getContext('2d');
+        if (coords.z === 13) { // split in four
+            ctx.rect(0, 0, bounds.x/2, bounds.y/2);
+            ctx.rect(0, bounds.y/2, bounds.x/2, bounds.y/2);
+            ctx.rect(bounds.x/2, 0, bounds.x/2, bounds.y/2);
+            ctx.rect(bounds.x/2, bounds.y/2, bounds.x/2, bounds.y/2);
+            ctx.stroke();
+        } else {
+            merge(coords, bounds, ctx, Math.pow(2, coords.z - 14));
+        }
         return tile;
       },
   });
+  
   L.gridLayer.gridDebug = (opts) => new L.GridLayer.GridDebug(opts);
 
   const routeGroup = L.layerGroup(routing);
@@ -199,7 +183,7 @@ function renderApp(rides, tiles, square, cluster) {
   const blockGroup = L.layerGroup([maxSquare]);
   const clusterGroup = L.layerGroup(clustering);
   const allTilesGroup = L.layerGroup([L.gridLayer.gridDebug({
-    minZoom: 13, maxZoom: 16
+    minZoom: 13, maxZoom: 18
   })]);
 
   const overlays = {};
