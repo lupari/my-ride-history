@@ -227,19 +227,31 @@ function renderApp(rides, tiles, square, cluster) {
             maxZoom: 18,
         },
     );
+    const mmlAttribution = `&copy; <a href="https://creativecommons.org/licenses/by/4.0/deed.en">Maanmittauslaitos ${new Date().getFullYear()}</a>`;
     const mmlLayer = L.tileLayer(
         'https://tiles.kartat.kapsi.fi/peruskartta/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="http://www.maanmittauslaitos.fi/avoindata_lisenssi_versio1_20120501">Maanmittauslaitos</a>',
+            attribution: mmlAttribution,
+            maxZoom: 18,
+        },
+    );
+    const bgLayer = L.tileLayer(
+        'https://tiles.kartat.kapsi.fi/taustakartta/{z}/{x}/{y}.png', {
+            attribution: mmlAttribution,
             maxZoom: 18,
         },
     );
     const aerialLayer = L.tileLayer(
         'https://tiles.kartat.kapsi.fi/ortokuva/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="http://www.maanmittauslaitos.fi/avoindata_lisenssi_versio1_20120501">Maanmittauslaitos</a>',
+            attribution: mmlAttribution,
             maxZoom: 18,
         },
     );
-    const baseMaps = {'OSM': osmLayer, 'MML': mmlLayer, 'AERIAL': aerialLayer};
+    const baseMaps = {
+        'OSM': osmLayer,
+        'MML': mmlLayer,
+        'BG': bgLayer,
+        'AERIAL': aerialLayer
+    };
 
     const map = L.map('map', {
         layers: [osmLayer, routeGroup, tileGroup]
