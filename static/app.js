@@ -15,8 +15,8 @@ function renderApp(rides, tiles, square, cluster) {
 
     const routing = rides.map((ride) => L.polyline(
         ride.route, {
-            color: 'blue',
-            weight: 1,
+            color: 'green',
+            weight: 2,
             opacity: 0.7,
             lineJoin: 'round',
         },
@@ -46,7 +46,7 @@ function renderApp(rides, tiles, square, cluster) {
     ));
 
     const tiling = tiles.map((t) => L.polygon(t.coordinates, {
-        color: '#006400',
+        color: 'blue',
         opacity: 0.5,
         weight: 0.5,
         fillOpacity: 0.1,
@@ -55,7 +55,7 @@ function renderApp(rides, tiles, square, cluster) {
 
     const maxSquare = L.polygon(
         square.shape, {
-            color: 'blue',
+            color: 'black',
             opacity: 0.5,
             weight: 0.5,
             fillOpacity: 0.1,
@@ -71,11 +71,11 @@ function renderApp(rides, tiles, square, cluster) {
         interactive: false,
     }));
 
-    lon2tile = (lon, zoom) => Math.floor((lon + 180) / 360 * Math.pow(2, zoom));
-    lat2tile = (lat, zoom) => Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom));
+    lon2tile = (lon, z) => Math.floor((lon + 180) / 360 * Math.pow(2, z));
+    lat2tile = (lat, z) => Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, z));
     tile2lon = (x, z) => x / Math.pow(2, z) * 360 - 180;
     tile2lat = (y, z) => {
-        var n = Math.PI - 2 * Math.PI * y / Math.pow(2, z);
+        const n = Math.PI - 2 * Math.PI * y / Math.pow(2, z);
         return 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
     }
 
@@ -124,10 +124,8 @@ function renderApp(rides, tiles, square, cluster) {
     }
 
     merge = (c, bounds, ctx, w) => {
-        const lon = tile2lon(c.x, c.z);
-        const lat = tile2lat(c.y, c.z);
-        const z14x = lon2tile(lon, 14);
-        const z14y = lat2tile(lat, 14);
+        const z14x = lon2tile(tile2lon(c.x, c.z), 14);
+        const z14y = lat2tile(tile2lat(c.y, c.z), 14);
 
         ctx.beginPath();
         if (z14y * w === c.y) { // top row
@@ -192,7 +190,7 @@ function renderApp(rides, tiles, square, cluster) {
             const tile = L.DomUtil.create('canvas', 'leaflet-tile');
             tile.width = bounds.x;
             tile.height = bounds.y;
-            var ctx = tile.getContext('2d');
+            const ctx = tile.getContext('2d');
             if (coords.z <= 13) { // split tiles
                 divide(ctx, {
                     x: 0,
@@ -229,10 +227,24 @@ function renderApp(rides, tiles, square, cluster) {
             maxZoom: 18,
         },
     );
+    const mmlLayer = L.tileLayer(
+        'https://tiles.kartat.kapsi.fi/peruskartta/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="http://www.maanmittauslaitos.fi/avoindata_lisenssi_versio1_20120501">Maanmittauslaitos</a>',
+            maxZoom: 18,
+        },
+    );
+    const aerialLayer = L.tileLayer(
+        'https://tiles.kartat.kapsi.fi/ortokuva/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="http://www.maanmittauslaitos.fi/avoindata_lisenssi_versio1_20120501">Maanmittauslaitos</a>',
+            maxZoom: 18,
+        },
+    );
+    const baseMaps = {'OSM': osmLayer, 'MML': mmlLayer, 'AERIAL': aerialLayer};
+
     const map = L.map('map', {
         layers: [osmLayer, routeGroup, tileGroup]
     });
-    L.control.layers(null, overlays).addTo(map);
+    L.control.layers(baseMaps, overlays).addTo(map);
     L.control.scale({
         imperial: false
     }).addTo(map);
