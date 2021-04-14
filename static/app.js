@@ -13,23 +13,21 @@ function renderApp(rides, tiles, square, cluster) {
         return `${hours}h ${minutes}m ${seconds}s`;
     };
 
-    const routing = rides.map((ride) => L.polyline(
+    const routing = rides.map(ride => L.polyline(
         ride.route, {
             color: 'green',
-            weight: 2,
+            weight: 3,
             opacity: 0.7,
             lineJoin: 'round',
         },
     ).on({
-        popupopen: (e) => e.target.setStyle({
+        popupopen: e => e.target.setStyle({
             color: 'red',
             weight: 5,
-            opacity: 0.7
         }),
-        popupclose: (e) => e.target.setStyle({
-            color: 'blue',
-            weight: 1,
-            opacity: 0.7
+        popupclose: e => e.target.setStyle({
+            color: 'green',
+            weight: 3,
         }),
     }).bindPopup(
         `<strong>${ride.title}</strong><br />

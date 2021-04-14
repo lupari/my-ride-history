@@ -14,13 +14,25 @@
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker
             .register('./service-worker.js')
-            .then(function(registration) {
+            .then(registration => {
+                registration.onupdatefound = () => {
+                    console.log('Update found. Waiting for install to complete.');
+                    const installingWorker = registration.installing;
+                    if (installingWorker == null) return;
+                    // Watch for changes to the worker's state. Once it is "installed", our cache
+                    // has been updated with our new files, so we can prompt the user to instantly
+                    // reload.
+                    installingWorker.onstatechange = () => {
+                          if(installingWorker.state === 'installed') {
+                            console.log('Install complete. Updating.');
+                            location.reload();
+                          }
+                    };
+                };
                 console.log('Service Worker Registered!');
-                return registration;
              })
-             .catch(function(err) {
-                console.error('Unable to register service worker.', err);
-        });
+             .catch(err => console.error('Unable to register service worker.', err));
+
     }
   </script>
   <style type="text/css">
