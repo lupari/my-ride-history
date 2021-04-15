@@ -51,9 +51,9 @@ self.addEventListener('fetch', event => {
 event.respondWith(
         caches.match(event.request)
             .then(res => {
-                return res || fetch(event.request).catch(() => caches.match('/'))
+                return res || fetch(event.request).catch(() => new Response("", { status: 200, statusText: 'offline'}))
             })
-            .catch(() => { caches.match('/') })
+            .catch(() => { new Response("", { status: 200, statusText: 'offline'})})
     )
 
 });
