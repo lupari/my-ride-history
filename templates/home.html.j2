@@ -11,29 +11,14 @@
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/cog.png')}}">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" />
   <script type="text/javascript">
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker
-            .register('./service-worker.js')
-            .then(registration => {
-                registration.onupdatefound = () => {
-                    console.log('Update found. Waiting for install to complete.');
-                    const installingWorker = registration.installing;
-                    if (installingWorker == null) return;
-                    // Watch for changes to the worker's state. Once it is "installed", our cache
-                    // has been updated with our new files, so we can prompt the user to instantly
-                    // reload.
-                    installingWorker.onstatechange = () => {
-                          if(installingWorker.state === 'installed') {
-                            console.log('Install complete. Updating.');
-                            location.reload();
-                          }
-                    };
-                };
-                console.log('Service Worker Registered!');
-             })
-             .catch(err => console.error('Unable to register service worker.', err));
+        // Check that service workers are supported
+        if ('serviceWorker' in navigator) {
+          // Use the window load event to keep the page load performant
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js');
+          });
+        }
 
-    }
   </script>
   <style type="text/css">
     html, body {
@@ -54,6 +39,18 @@
     .loader {
        display: none;
     }
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: #000000;
+      color: white;
+      padding: 8px;
+      z-index: 100;
+    }
+    .skip-link:focus {
+      top: 0;
+    }
   </style>
   <script type="text/javascript">
     function spinner() {
@@ -65,8 +62,9 @@
 </head>
 
 <body>
+  <a class="skip-link" href="#main">Skip to main</a>
   <h1 style="display: none">Mah rides</h1>
-  <div id="wrapper">
+  <main id="main">
       <a href="/app" onclick="spinner()" class="draw btn btn-dark center">Draw map</a>
       <div class="loader center">
         <div class="d-flex justify-content-center">
@@ -75,7 +73,7 @@
           </div>
         </div>
       </div>
-  </div>
+  </main>
 </body>
 
 </html>

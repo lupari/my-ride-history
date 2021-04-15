@@ -39,8 +39,6 @@ self.addEventListener('activate', (evt) => {
 // If no response is found, it populates the runtime cache with the response
 // from the network before returning it to the page.
 self.addEventListener('fetch', event => {
-    // DevTools opening will trigger these o-i-c requests, which this SW can't handle.
-    // There's probably more going on here, but I'd rather just ignore this problem. :)
     if (event.request.cache === 'only-if-cached' && event.request.mode !== 'same-origin') return;
     // If we are to sync stuff with Strava we are going to have updated map content -> remove map data response from cache
     // Don't know service worker enough to come up with a better solution
@@ -50,22 +48,12 @@ self.addEventListener('fetch', event => {
         return;
     }
     // Skip cross-origin requests, like those for Google Analytics.
-    event.respondWith(
-      caches.match(event.request).then(cachedResponse => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-
-        return caches.open(RUNTIME).then(cache => {
-          // const options = event.request.url.match( '^.*\/sync.*$') ? { credentials: 'include' } : {};
-          return fetch(event.request).then(response => {
-            // Put a copy of the response in the runtime cache.
-            return cache.put(event.request, response.clone()).then(() => {
-              return response;
-            });
-          });
-        });
-      })
-    );
+event.respondWith(
+        caches.match(event.request)
+            .then(res => {
+                return res || fetch(event.request).catch(() => caches.match('/'))
+            })
+            .catch(() => { caches.match('/') })
+    )
 
 });
