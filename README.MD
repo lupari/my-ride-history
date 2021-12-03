@@ -1,6 +1,6 @@
 My Ride History
 ===============
-This is a hobby project I built so I can nicely keep track of where I've ridden.  On top of that this app calculates and displays the ~square kilometer sized tiles (OSM tile zoom level 14) visited and based on those it also displays the largest tile cluster and maximum tile square. 
+This is a hobby project I built so I can nicely keep track of where I've ridden on my bicycle.  On top of that this app calculates and displays the ~square kilometer sized tiles (OSM tile zoom level 14) visited and based on those it also displays the largest tile cluster and maximum tile square. 
 
 Ride data comes through Strava's API and for accessing it you need to create a Strava API account. See https://developers.strava.com/ for details. Server is implemented as a [Flask](https://www.palletsprojects.com/p/flask/) application whereas client relies heavily on [Leaflet.js](https://leafletjs.com/).
 
